@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 import os
-import glob
+# import glob
 import youtube_dl
 from PyInquirer import prompt
 
@@ -68,6 +68,16 @@ answer=prompt(courseChoice)
 courseName=answer['choice']
 print(f'collecting videos and resources data for course {courseName}')
 
+# get suppl resources in resources tab
+suppList=[]
+suppURL=f'https://hello.iitk.ac.in/api/{courseName}21/resources'
+suppData=sessionHello.get(suppURL,headers=customHeaders).json() #<-- nice json
+if len(suppData)>0:
+    for data in suppData:
+        suppList.extend(data['resources'])
+else:
+    print(f'There are no suppl data for {courseName}')
+
 videosList=[]
 resourcesList=[]
 summaryURL=f'https://hello.iitk.ac.in/api/{courseName}21/lectures/summary'
@@ -99,7 +109,7 @@ if len(data)>0:
     
 else:
     print(f'no lectures found for course {courseName}.')
-    exit()
+    # exit()
 
 
 # forumsDF=pd.DataFrame(forumsQuestionList)
@@ -121,7 +131,7 @@ choice=[
         'type':'list',
         'name':'type',
         'message':'Which type',
-        'choices':['Resources','Videos']
+        'choices':['Resources','Videos','Supp']
     }
 ]
 
@@ -170,17 +180,18 @@ def downloader(fileList=[],existsList=[]):
     return None
     
 
-print(f'downloading {choice} for {courseName}. Press `Ctrl+Z` to stop the programme.')
+print(f'downloading {choiceName} for {courseName}. Press `Ctrl+Z` to stop the programme.')
 
 if choiceName=='Videos':
-    mp4files = [file for file in glob.glob("*.mp4") if os.path.getsize(file)!=0]
+    mp4files = [file for file in os.listdir() if os.path.getsize(file)!=0]
     '''
+    # could use listdir() rather than glob as we are in Videos dir
     for file in glob.glob("*.mp4"):
-    mp4files.append(file)
+        mp4files.append(file)
     '''
     downloader(videosList,mp4files)
 
-else:
+elif choiceName=='Resources':
     resourceFiles=[file for file in os.listdir() if os.path.getsize(file)!=0]
     '''
     resourceFiles=[]
@@ -189,7 +200,9 @@ else:
         resourceFiles.extend(glob.glob(type))
     '''
     downloader(resourcesList,resourceFiles)
-
+else:
+    suppFiles=[file for file in os.listdir() if os.path.getsize(file)!=0]
+    downloader(suppList,suppFiles)
 '''
 when stopped in between the file name will be in dir but file would be corrupt(in-fact no content)
 Manual:
