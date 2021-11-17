@@ -8,6 +8,11 @@ It is a simple script that automates resources(like videos, pdfs etc) downloadin
 - simple loop to get necessary info
 - create dirs and download files that are not there in dirs
 
+## todos
+- [ ] add progressbar for request downloads
+- [ ] add resume functionality for request downloads
+- [ ] add visual confirmation with progressbar
+
 ---
 `Project files tree`
 ```
