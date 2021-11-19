@@ -9,9 +9,9 @@ It is a simple script that automates resources(like videos, pdfs etc) downloadin
 - create dirs and download files that are not there in dirs
 
 ## todos
-- [ ] add progressbar for request downloads
+- [x] add progressbar for request downloads
 - [ ] add resume functionality for request downloads
-- [ ] add visual confirmation with progressbar
+- [x] add visual confirmation with progressbar
 
 ---
 `Project files tree`
