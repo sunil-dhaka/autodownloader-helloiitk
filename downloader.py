@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
+from tqdm import tqdm
 import os
 # import glob
 import youtube_dl
@@ -168,15 +169,21 @@ def downloader(fileList=[],existsList=[]):
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                         ydl.download([item['fileURL']])
             else:
-                with open(fileName,'wb') as file:
-                    r=requests.get(item['fileURL'])
-                    if r.status_code==200:
-                        for chunk in r.iter_content(chunk_size=100000):
-                            if chunk:
-                                file.write(chunk)
-                        print(f'Downloaded {fileName}')
-                    else:
-                        print(f'bad request. could not download {fileName}')
+                r=requests.get(item['fileURL'],stream=True)
+                if r.status_code==200:
+                    with open(fileName,'wb') as file:
+                        total_size=int(r.headers.get('Content-Length'))
+                        # print(r.headers)
+                        inital_pos=0
+                        with tqdm(total=total_size,unit_scale=True,unit='B',desc=fileName,initial=inital_pos,ascii=True) as progress_bar:
+                            for chunk in r.iter_content(chunk_size=1024):
+                                if chunk:
+                                    file.write(chunk)
+                                    progress_bar.update(len(chunk))	
+
+                            print(f'Completed downloading of {fileName}.')
+                else:
+                    print(f'bad request. could not download {fileName}')
     return None
     
 
