@@ -1,0 +1,7 @@
+html { background-color: #eef; } 
+body {
+    /* min-height: 100vh; */
+    max-width: 600px;
+    background-color: #eef; 
+    margin: 0 auto;
+}
