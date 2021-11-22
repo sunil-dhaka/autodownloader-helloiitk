@@ -6,9 +6,14 @@ import pdfkit
 from PyInquirer import prompt
 # import html_list
 # import html2pdf
+#==================================================================================
 
 def jax2tex(text):
     text='$'.join(('$'.join(text.split('\('))).split('\)'))
+    if '<img' in text:
+        soup=bs(text,'html.parser')
+        soup.img['src']='https://hello.iitk.ac.in/'+soup.img['src']
+        text=str(soup)
     return text
 
 def html_list(json_data=None):
@@ -41,62 +46,78 @@ def html_list(json_data=None):
             - others
         '''
         qid_order=[]
+
+        #==================================================================================
+        ques_str+='<div>\n'
         ques_str+='<h2 style="text-align:center;">True False</h2>\n'
-        ques_str+='<hr>\n<br>'
+        ques_str+='<hr>\n'
         for que in json_data.get('quiz',None)['questions']:
             que_type=que.get('type',None)
             if que_type=='truefalse':
                 qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)+1} | Score: {que["score"]} | Negative Score: {que["negative_score"]}</h4>'
-
+                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                 ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n<br>'
+                ques_str+='\n'
+        ques_str+='</div>\n'
+        #==================================================================================
+        ques_str+='<div>\n'
         ques_str+='<h2 style="text-align:center;">Muliple Choice</h2>\n'
-        ques_str+='<hr>\n<br>'
+        ques_str+='<hr>\n'
         for que in json_data.get('quiz',None)['questions']:
             que_type=que.get('type',None)
             if que_type=='multichoice':
                 qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)+1} | Score: {que["score"]} | Negative Score: {que["negative_score"]}</h4>'
+                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
 
                 ques_str+=jax2tex(que.get('title'))
                 ques_str+='<ol>\n'
                 for option in que['options']:
                     ques_str+=f'<li>{jax2tex(option["value"])}</li>\n'
                 ques_str+='<ol>\n'
-                ques_str+='\n<br>'
                 
+        ques_str+='</div>\n'
+        #==================================================================================
+        ques_str+='<div>\n'
         ques_str+='<h2 style="text-align:center;">Short Answer</h2>\n'
-        ques_str+='<hr>\n<br>'
+        ques_str+='<hr>\n'
         for que in json_data.get('quiz',None)['questions']:
             que_type=que.get('type',None)
             if que_type=='short_answer':
                 qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)+1} | Score: {que["score"]} | Negative Score: {que["negative_score"]}</h4>'
+                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                 ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n<br>'
+                ques_str+='\n'
+        ques_str+='</div>\n'
+        #==================================================================================
+        ques_str+='<div>\n'
         ques_str+='<h2 style="text-align:center;">Long Answer</h2>\n'
-        ques_str+='<hr>\n<br>'
+        ques_str+='<hr>\n'
         for que in json_data.get('quiz',None)['questions']:
             que_type=que.get('type',None)
             if que_type=='long_answer':
                 qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)+1} | Score: {que["score"]} | Negative Score: {que["negative_score"]}</h4>'
+                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                 ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n<br>'
+                ques_str+='\n'
+        ques_str+='</div>\n'
+        #==================================================================================
         if len(qid_order)==len(json_data.get('quiz',None)['questions']):
             pass
         else:
+            ques_str+='<div>\n'
             ques_str+='<h2 style="text-align:center;">Other Types</h2>\n'
-            ques_str+='<hr>\n<br>'
+            ques_str+='<hr>\n'
             for que in json_data.get('quiz',None)['questions']:
                 que_type=que.get('type',None)
                 if que_type!='truefalse' and que_type!='multichoice' and que_type!='short_answer' and que_type!='long_answer':
                     qid_order.append(que['qid'])
-                    ques_str+=f'<h4>Question: {len(qid_order)+1} | Score: {que["score"]} | Negative Score: {que["negative_score"]}</h4>'
+                    ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                     ques_str+=jax2tex(que.get('title'))
-                    ques_str+='\n<br>'
+                    ques_str+='\n'
+            ques_str+='</div>\n'
     return ques_str
+#==================================================================================
+
 # styling can be changed in `main.css` file
 # give full path of CSS file something goes wrong in your case
 CSS='main.css'
@@ -108,18 +129,19 @@ def html2pdf(html_page=None):
         pdf_name=html_page.split('.html')[0]+'.pdf'
         options = {
             'page-size': 'Letter',
-            # 'margin-top': '0.75in',
+            'margin-top': '0.01in',
             'margin-right': '0.75in',
-            # 'margin-bottom': '0.75in',
+            'margin-bottom': '0.01in',
             'margin-left': '0.75in',
             'encoding': "UTF-8",
             'javascript-delay':'5000' # give it time to render javascript
             # https://stackoverflow.com/questions/25757503/approach-python-pdfkit-convert-webpagejs-generated-into-pdf
         }
         # try:
-        pdfkit.from_file(html_page,pdf_name, options=options)
+        pdfkit.from_file(html_page,pdf_name, options=options) # can add CSS
         # except Exception as e:
             # print(e)    
+#==================================================================================
 
 print('Enter your hello iitk username:')
 username=input('username:')
@@ -146,6 +168,7 @@ else:
     print('Ocuured some problem during sign in action.')
     print('try again. exiting the programme')
     exit()
+#==================================================================================
 
 coursesLink='https://hello.iitk.ac.in/index.php/courses'
 
@@ -182,6 +205,7 @@ courseChoice=[
 answer=prompt(courseChoice)
 courseName=answer['choice']
 print(f'collecting quiz and assignments data for course {courseName}')
+#==================================================================================
 
 folder=courseName.upper()
 if os.path.isdir(os.path.join(os.getcwd(),folder)):
@@ -205,6 +229,7 @@ else:
     os.mkdir(os.path.join(os.getcwd(),choiceName))
     os.chdir(os.path.join(os.getcwd(),choiceName))
 
+#==================================================================================
 summaryURL=f'https://hello.iitk.ac.in/api/{courseName}21/quiz/summary'
 data=sessionHello.get(summaryURL,headers=customHeaders).json()
 if len(data)>0:
@@ -230,13 +255,13 @@ if len(data)>0:
             html_page=f'{quiz_title}.html'
             html2pdf(html_page)
             print(f'Stored {quiz_title}.pdf')
-    
-
 else:
     print(f'no lectures found for course {courseName}.')
     with open('quizzes-summary.json','w') as file:
         json.dump({'response':f'No Quiz data Found for course {courseName}'},file)
-    
+#==================================================================================
+
+
 summaryURL=f'https://hello.iitk.ac.in/api/{courseName}21/assignments/summary'
 data=sessionHello.get(summaryURL,headers=customHeaders).json()
 if len(data)>0:
@@ -262,9 +287,7 @@ if len(data)>0:
             with open(f'{assignment_title}_submission.json','w') as f:
                 json.dump(assignment_data,f)
 
-            print(f'Stored {assignment_title} files')
-    
-
+            print(f'Stored {assignment_title} files')    
 else:
     print(f'no lectures found for course {courseName}.')
     with open('quizzes-summary.json','w') as file:
