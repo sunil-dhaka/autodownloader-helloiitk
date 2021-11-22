@@ -12,7 +12,7 @@ def jax2tex(text):
     text='$'.join(('$'.join(text.split('\('))).split('\)'))
     if '<img' in text:
         soup=bs(text,'html.parser')
-        soup.img['src']='https://hello.iitk.ac.in/'+soup.img['src']
+        soup.img['src']='https://hello.iitk.ac.in'+soup.img['src']
         text=str(soup)
     return text
 
@@ -46,60 +46,112 @@ def html_list(json_data=None):
             - others
         '''
         qid_order=[]
+        ans_str='<hr>\n<hr>\n'
+        ques_str+='<div>\n'
+        ques_str+='<h1 style="text-align:center;">Questions</h1>\n'
+        ques_str+='<div>\n'
+        ans_str+='<div>\n'
+        ans_str+='<h1 style="text-align:center;">Answers</h1>\n'
+        ans_str+='<hr>\n'
+        #==================================================================================
+        if any(que.get('type',None)=='truefalse' for que in json_data.get('quiz',None)['questions']):
+            ques_str+='<div>\n'
+            ques_str+='<h2 style="text-align:center;">True False</h2>\n'
+            ques_str+='<hr>\n'
+            ans_str+='<div>\n'
+            ans_str+='<h2 style="text-align:center;">True False</h2>\n'
+            ans_str+='<hr>\n'
+            for que in json_data.get('quiz',None)['questions']:
+                que_type=que.get('type',None)
+                if que_type=='truefalse':
+                    qid_order.append(que['qid'])
+                    ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
+                    ques_str+=jax2tex(que.get('title'))
+                    ques_str+='\n'
 
+                    ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
+                    for ans in json_data.get('correctSolutions',None):
+                        if ans.get('qid')==qid_order[-1]:
+                            answer=ans.get('correctAnswer',None)[0].get('aid',None)
+                            if answer==1:
+                                ans_str+='<h5>True</h5>\n'
+                            elif answer==0:
+                                ans_str+='<h5>False</h5>\n'
+                            else:
+                                ans_str+=f'<h5>{answer}</h5>\n'
+                            break
+            ques_str+='</div>\n'
+            ans_str+='</div>\n'
         #==================================================================================
-        ques_str+='<div>\n'
-        ques_str+='<h2 style="text-align:center;">True False</h2>\n'
-        ques_str+='<hr>\n'
-        for que in json_data.get('quiz',None)['questions']:
-            que_type=que.get('type',None)
-            if que_type=='truefalse':
-                qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
-                ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n'
-        ques_str+='</div>\n'
-        #==================================================================================
-        ques_str+='<div>\n'
-        ques_str+='<h2 style="text-align:center;">Muliple Choice</h2>\n'
-        ques_str+='<hr>\n'
-        for que in json_data.get('quiz',None)['questions']:
-            que_type=que.get('type',None)
-            if que_type=='multichoice':
-                qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
+        if any(que.get('type',None)=='multichoice' for que in json_data.get('quiz',None)['questions']):
+            ques_str+='<div>\n'
+            ques_str+='<h2 style="text-align:center;">Muliple Choice</h2>\n'
+            ques_str+='<hr>\n'
+            ans_str+='<div>\n'
+            ans_str+='<h2 style="text-align:center;">Multiple Choice</h2>\n'
+            ans_str+='<hr>\n'
+            for que in json_data.get('quiz',None)['questions']:
+                que_type=que.get('type',None)
+                if que_type=='multichoice':
 
-                ques_str+=jax2tex(que.get('title'))
-                ques_str+='<ol>\n'
-                for option in que['options']:
-                    ques_str+=f'<li>{jax2tex(option["value"])}</li>\n'
-                ques_str+='<ol>\n'
-                
-        ques_str+='</div>\n'
+                    # prepare answer ids
+                    ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
+                    answer_ids=[]
+                    for ans in json_data.get('correctSolutions',None):
+                        if ans.get('qid')==qid_order[-1]:
+                            answer=ans.get('correctAnswer',None)
+                            for a in answer:
+                                answer_ids.append(a.get('aid',None))
+                            break
+                    # done
+                    qid_order.append(que['qid'])
+                    ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
+                    ques_str+=jax2tex(que.get('title'))
+                    ques_str+='<ol>\n'
+                    for i,option in enumerate(que['options']):
+                        ques_str+=f'<li>{jax2tex(option["value"])}</li>\n'
+                        if option['aid'] in answer_ids:
+                            ans_str+=f'<h5>{i+1}. {jax2tex(option["value"])}</h5>\n'
+                    ques_str+='<ol>\n'
+            ques_str+='</div>\n'
+            ans_str+='</div>\n'
         #==================================================================================
-        ques_str+='<div>\n'
-        ques_str+='<h2 style="text-align:center;">Short Answer</h2>\n'
-        ques_str+='<hr>\n'
-        for que in json_data.get('quiz',None)['questions']:
-            que_type=que.get('type',None)
-            if que_type=='short_answer':
-                qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
-                ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n'
-        ques_str+='</div>\n'
+        if any(que.get('type',None)=='short_answer' for que in json_data.get('quiz',None)['questions']):
+            ques_str+='<div>\n'
+            ques_str+='<h2 style="text-align:center;">Short Answer</h2>\n'
+            ques_str+='<hr>\n'
+            ans_str+='<div>\n'
+            ans_str+='<h2 style="text-align:center;">Short Answer</h2>\n'
+            ans_str+='<hr>\n'
+            for que in json_data.get('quiz',None)['questions']:
+                que_type=que.get('type',None)
+                if que_type=='short_answer':
+                    qid_order.append(que['qid'])
+                    ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
+                    ques_str+=jax2tex(que.get('title'))
+                    ques_str+='\n'
+                    ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
+                    for ans in json_data.get('correctSolutions',None):
+                        if ans.get('qid')==qid_order[-1]:
+                            answer=ans.get('correctAnswer',None)
+                            for a in answer:
+                                ans_str+=f'<h5>{a}</h5>\n'
+                            break
+            ques_str+='</div>\n'
+            ans_str+='</div>\n'
         #==================================================================================
-        ques_str+='<div>\n'
-        ques_str+='<h2 style="text-align:center;">Long Answer</h2>\n'
-        ques_str+='<hr>\n'
-        for que in json_data.get('quiz',None)['questions']:
-            que_type=que.get('type',None)
-            if que_type=='long_answer':
-                qid_order.append(que['qid'])
-                ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
-                ques_str+=jax2tex(que.get('title'))
-                ques_str+='\n'
-        ques_str+='</div>\n'
+        if any(que.get('type',None)=='long_answer' for que in json_data.get('quiz',None)['questions']):
+            ques_str+='<div>\n'
+            ques_str+='<h2 style="text-align:center;">Long Answer</h2>\n'
+            ques_str+='<hr>\n'
+            for que in json_data.get('quiz',None)['questions']:
+                que_type=que.get('type',None)
+                if que_type=='long_answer':
+                    qid_order.append(que['qid'])
+                    ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
+                    ques_str+=jax2tex(que.get('title'))
+                    ques_str+='\n'
+            ques_str+='</div>\n'
         #==================================================================================
         if len(qid_order)==len(json_data.get('quiz',None)['questions']):
             pass
@@ -115,7 +167,10 @@ def html_list(json_data=None):
                     ques_str+=jax2tex(que.get('title'))
                     ques_str+='\n'
             ques_str+='</div>\n'
-    return ques_str
+        
+        # close bosy and html tags
+        ans_str+='</body>\n</html>'
+    return ques_str+ans_str
 #==================================================================================
 
 # styling can be changed in `main.css` file
@@ -218,16 +273,16 @@ else:
     os.chdir(os.path.join(os.getcwd(),folder))
 
 
-choiceName='Quizzes'
+sub_folder='Quizzes'
 
-if os.path.isdir(os.path.join(os.getcwd(),choiceName)):
-    if os.getcwd()==os.path.join(os.getcwd(),choiceName):
+if os.path.isdir(os.path.join(os.getcwd(),sub_folder)):
+    if os.getcwd()==os.path.join(os.getcwd(),sub_folder):
         pass
     else:
-        os.chdir(os.path.join(os.getcwd(),choiceName))
+        os.chdir(os.path.join(os.getcwd(),sub_folder))
 else:
-    os.mkdir(os.path.join(os.getcwd(),choiceName))
-    os.chdir(os.path.join(os.getcwd(),choiceName))
+    os.mkdir(os.path.join(os.getcwd(),sub_folder))
+    os.chdir(os.path.join(os.getcwd(),sub_folder))
 
 #==================================================================================
 summaryURL=f'https://hello.iitk.ac.in/api/{courseName}21/quiz/summary'
