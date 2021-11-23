@@ -46,6 +46,10 @@ def html_list(json_data=None):
             - others
         '''
         qid_order=[]
+        are_sol_out=True
+        if json_data.get('correctSolutions',None) is None:
+            are_sol_out=False
+        
         ans_str='<hr>\n<hr>\n'
         ques_str+='<div>\n'
         ques_str+='<h1 style="text-align:center;">Questions</h1>\n'
@@ -70,16 +74,17 @@ def html_list(json_data=None):
                     ques_str+='\n'
 
                     ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
-                    for ans in json_data.get('correctSolutions',None):
-                        if ans.get('qid')==qid_order[-1]:
-                            answer=ans.get('correctAnswer',None)[0].get('aid',None)
-                            if answer==1:
-                                ans_str+='<h5>True</h5>\n'
-                            elif answer==0:
-                                ans_str+='<h5>False</h5>\n'
-                            else:
-                                ans_str+=f'<h5>{answer}</h5>\n'
-                            break
+                    if are_sol_out:
+                        for ans in json_data.get('correctSolutions',None):
+                            if ans.get('qid')==qid_order[-1]:
+                                answer=ans.get('correctAnswer',None)[0].get('aid',None)
+                                if answer==1:
+                                    ans_str+='<h5>True</h5>\n'
+                                elif answer==0:
+                                    ans_str+='<h5>False</h5>\n'
+                                else:
+                                    ans_str+=f'<h5>{answer}</h5>\n'
+                                break
             ques_str+='</div>\n'
             ans_str+='</div>\n'
         #==================================================================================
@@ -94,16 +99,18 @@ def html_list(json_data=None):
                 que_type=que.get('type',None)
                 if que_type=='multichoice':
                     qid_order.append(que['qid'])
-                    # prepare answer ids
-                    ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
                     answer_ids=[]
-                    for ans in json_data.get('correctSolutions',None):
-                        if ans.get('qid')==qid_order[-1]:
-                            answer=ans.get('correctAnswer',None)
-                            for a in answer:
-                                answer_ids.append(a.get('aid',None))
-                            break
-                    # done
+                    if are_sol_out:
+                        # prepare answer ids
+                        ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
+                        
+                        for ans in json_data.get('correctSolutions',None):
+                            if ans.get('qid')==qid_order[-1]:
+                                answer=ans.get('correctAnswer',None)
+                                for a in answer:
+                                    answer_ids.append(a.get('aid',None))
+                                break
+                        # done
                     
                     ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                     ques_str+=jax2tex(que.get('title'))
@@ -130,13 +137,14 @@ def html_list(json_data=None):
                     ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                     ques_str+=jax2tex(que.get('title'))
                     ques_str+='\n'
-                    ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
-                    for ans in json_data.get('correctSolutions',None):
-                        if ans.get('qid')==qid_order[-1]:
-                            answer=ans.get('correctAnswer',None)
-                            for a in answer:
-                                ans_str+=f'<h5>{a}</h5>\n'
-                            break
+                    if are_sol_out:
+                        ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
+                        for ans in json_data.get('correctSolutions',None):
+                            if ans.get('qid')==qid_order[-1]:
+                                answer=ans.get('correctAnswer',None)
+                                for a in answer:
+                                    ans_str+=f'<h5>{a}</h5>\n'
+                                break
             ques_str+='</div>\n'
             ans_str+='</div>\n'
         #==================================================================================
@@ -169,8 +177,13 @@ def html_list(json_data=None):
             ques_str+='</div>\n'
         
         # close bosy and html tags
+        
+    if are_sol_out:
         ans_str+='</body>\n</html>'
-    return ques_str+ans_str
+        return ques_str+ans_str
+    else:
+        ques_str+='</body>\n</html>'
+        return ques_str
 #==================================================================================
 
 # styling can be changed in `main.css` file
@@ -311,7 +324,7 @@ if len(data)>0:
             html2pdf(html_page)
             print(f'Stored {quiz_title}.pdf')
 else:
-    print(f'no lectures found for course {courseName}.')
+    print(f'no quiz found for course {courseName}.')
     with open('quizzes-summary.json','w') as file:
         json.dump({'response':f'No Quiz data Found for course {courseName}'},file)
 #==================================================================================
@@ -342,9 +355,9 @@ if len(data)>0:
             with open(f'{assignment_title}_submission.json','w') as f:
                 json.dump(assignment_data,f)
 
-            print(f'Stored {assignment_title} files')    
+            print(f'Dumped {assignment_title} files')    
 else:
-    print(f'no lectures found for course {courseName}.')
+    print(f'no assignments found for course {courseName}.')
     with open('quizzes-summary.json','w') as file:
-        json.dump({'response':f'No Quiz data Found for course {courseName}'},file)
+        json.dump({'response':f'No assignemnt data Found for course {courseName}'},file)
     
