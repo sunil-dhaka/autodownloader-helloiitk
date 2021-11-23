@@ -93,7 +93,7 @@ def html_list(json_data=None):
             for que in json_data.get('quiz',None)['questions']:
                 que_type=que.get('type',None)
                 if que_type=='multichoice':
-
+                    qid_order.append(que['qid'])
                     # prepare answer ids
                     ans_str+=f'<h4>Answer: {len(qid_order)}</h4>\n'
                     answer_ids=[]
@@ -104,7 +104,7 @@ def html_list(json_data=None):
                                 answer_ids.append(a.get('aid',None))
                             break
                     # done
-                    qid_order.append(que['qid'])
+                    
                     ques_str+=f'<h4>Question: {len(qid_order)} | Score: {que["score"]} | Negative Score: -{que["negative_score"]}</h4>\n'
                     ques_str+=jax2tex(que.get('title'))
                     ques_str+='<ol>\n'
@@ -112,7 +112,7 @@ def html_list(json_data=None):
                         ques_str+=f'<li>{jax2tex(option["value"])}</li>\n'
                         if option['aid'] in answer_ids:
                             ans_str+=f'<h5>{i+1}. {jax2tex(option["value"])}</h5>\n'
-                    ques_str+='<ol>\n'
+                    ques_str+='</ol>\n'
             ques_str+='</div>\n'
             ans_str+='</div>\n'
         #==================================================================================
