@@ -5,3 +5,4 @@ PyInquirer==1.0.3
 requests==2.23.0
 tqdm==4.50.2
 youtube_dl==2021.6.6
+
